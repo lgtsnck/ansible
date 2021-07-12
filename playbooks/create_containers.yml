@@ -1,0 +1,46 @@
+---
+- name: Reverse proxy nginx to grafana
+  hosts: all
+  become: yes
+  remote_user: devops
+
+  tasks:
+
+  - name: Create grafana storage directory
+    file:
+      path: /grafana
+      state: directory
+
+
+  - name: Create grafana container
+    docker_container:
+      name: grafana
+      image: grafana/grafana
+      state: present
+      ports:
+        - 3000:3000
+      volumes: /grafana:/grafana
+
+  - name: Create nginx storage directory
+    file:
+      path: /nginx
+      state: directory
+
+  - name: Copy nginx.conf to remote host
+    copy: 
+      src: /home/lgtsnck/ansible/nginx.conf 
+      dest: /nginx/nginx.conf
+
+  - name: Create nginx container
+    docker_container:
+      name: nginx
+      image: nginx
+      state: started
+      links:
+        - "grafana"
+      ports:
+        - 80:80
+      expose:
+        - "80"
+      volumes:
+        - /etc/docker/nginx/nginx.conf:/nginx/nginx.conf

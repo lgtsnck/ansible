@@ -1,0 +1,24 @@
+---
+- name: Enable UFW and allow access to port 22 and 80 and deny
+  hosts: all
+  become: yes
+  remote_user: devops
+
+  tasks:
+
+  - name: Deny everything and enable UFW
+    ufw:
+      state: enabled
+      policy: deny
+
+  - name: Allow all access to port 22
+    ufw:
+      rule: allow
+      port: 80
+      proto: any
+
+  - name: Allow all access to port 80
+    ufw:
+      rule: allow
+      port: 80
+      proto: any
