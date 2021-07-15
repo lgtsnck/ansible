@@ -6,30 +6,14 @@
 
   tasks:
 
-  - name: Create grafana storage directory
-    file:
-      path: /grafana
-      state: directory
-
-
   - name: Create grafana container
     docker_container:
       name: grafana
       image: grafana/grafana
-      state: present
+      state: started
       ports:
         - 3000:3000
-      volumes: /grafana:/grafana
-
-  - name: Create nginx storage directory
-    file:
-      path: /nginx
-      state: directory
-
-  - name: Copy nginx.conf to remote host
-    copy: 
-      src: /home/lgtsnck/ansible/nginx.conf 
-      dest: /nginx/nginx.conf
+      volumes: /etc/docker/grafana/
 
   - name: Create nginx container
     docker_container:
@@ -37,10 +21,19 @@
       image: nginx
       state: started
       links:
-        - "grafana"
+        - "grafana:grafana"
       ports:
         - 80:80
-      expose:
-        - "80"
       volumes:
-        - /etc/docker/nginx/nginx.conf:/nginx/nginx.conf
+        - /etc/docker/nginx/
+
+  - name: Copy nginx config file to remote host
+    copy:
+      src: ~/ansible/default.conf
+      dest: /home/devops/
+
+  - name: Copy our default.conf in nginx container
+    command: "docker cp default.conf nginx:/etc/nginx/conf.d/"
+
+  - name: Restart nginx container with new config file
+    command: "docker container restart nginx"
