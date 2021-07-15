@@ -17,21 +17,11 @@
       groups: "sudo, www-data, docker"
       state: present
 
-  - name: Generate ssh key
-    user:
-      name: devops
-      generate_ssh_key: yes
-      ssh_key_type: rsa
-      ssh_key_bits: 4096
-      ssh_key_file: .ssh/id_devops_rsa.pub
-      state: present
-      force: no
-
   - name: Add authorized key
     authorized_key:
       user: devops
       state: present
-      key: "{{ lookup('file', '/home/lgtsnck/.ssh/id_rsa.pub') }}"
+      key: "{{ lookup('file', '/$HOME/.ssh/id_rsa.pub') }}"
 
   - name: "Allow sudo users to sudo without a password"
     lineinfile:
