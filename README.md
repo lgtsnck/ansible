@@ -1,30 +1,38 @@
 **Тестовое задание на позицию DevOps-инженер**
 
-Чтобы запустить playbooks потребуется Ansible версии 3.2.0
+Чтобы запустить плейбуки потребуется Ansible версии 3.2.0, установленный через pip. Данные плейбуки запускаются на семействе Debian, т.к. используется пакетный менеджер apt. 
 
-Установка docker:
-
-    ansible-playbook playbooks/install_docker.yml --extra-vars "ansible_user=write_user_host ansible_become_password=write_password_host"
+В файле inventory, с названием hosts впишите свои удаленные хосты, по умолчанию настоен лишь localhost в файле ansible.cfg.
 
 Генерируем ssh ключ:
 
     ssh-keygen -t rsa
 
+Скопируем ssh ключ на удалённый хост:
+
+    ssh-copy-id -i ~/.ssh/id_rsa.pub test@127.0.0.1
+
+Установка docker:
+
+    ansible-playbook playbooks/install_docker.yml --extra-vars "ansible_user=test ansible_become_password=test"
+
+
 Создаем пользователя devops с группами sudo, docker, www-data.
-Запрещаем по доступ с помощью пароля и доступ по ssh для root, делаем sudo без запроса пароля:
+Запрещаем доступ с помощью пароля для всех пользователей и доступ по ssh для root, делаем sudo без запроса пароля:
 
-    ansible-playbook playbooks/init_devops_user.yml --extra-vars "ansible_user=write_user_host ansible_become_password=write_password_host"
+    ansible-playbook playbooks/init_devops_user.yml --extra-vars "ansible_user=test ansible_become_password=test"
 
-После создания пользователя devops, к примеру, можно удалить старого пользователя.
-
-Вписываем в файле конфигурации ansible.cfg путь к созданному ключу на удаленном хосте:
-
-    private_key_file = /home/devops/.ssh/id_devops_rsa
 
 Включаем фаервол и оставляем открытыми только 22 и 80 порты:
 
     ansible-playbook playbooks/enable_UFW.yml
 
-Разворачиваем nginx как Reverse Proxy и Grafana:
+Разворачиваем nginx как Reverse Proxy и Grafana в docker-контейнерах:
 
     ansible-playbook playbooks/create_containers.yml
+
+Переходим по адресу удалённого хоста(или localhost) по порту 80, должна открыться форма логина Grafana:
+
+    http://127.0.0.1:80
+
+На этом всё :-)
