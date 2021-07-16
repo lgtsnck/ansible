@@ -14,7 +14,7 @@
   - name: Allow all access to port 22
     ufw:
       rule: allow
-      port: 80
+      port: 22
       proto: any
 
   - name: Allow all access to port 80
