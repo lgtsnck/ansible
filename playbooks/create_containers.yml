@@ -6,34 +6,49 @@
 
   tasks:
 
+  - name: Create bridge docker network
+    docker_network:
+      name: nginx_grafana_bridge
+      ipam_config:
+        - subnet: "172.3.27.0/24"
+          gateway: "172.3.27.1"
+
   - name: Create grafana container
     docker_container:
       name: grafana
       image: grafana/grafana
       state: started
+      networks:
+        - name: nginx_grafana_bridge
+          ipv4_address: "172.3.27.11"
+          aliases:
+            - aliasedgrafana
+      exposed_ports:
+        - '3000'
       ports:
         - 3000:3000
-      volumes: /etc/docker/grafana/
 
   - name: Create nginx container
     docker_container:
       name: nginx
       image: nginx
       state: started
-      links:
-        - "grafana:grafana"
+      networks:
+        - name: nginx_grafana_bridge
+          ipv4_address: "172.3.27.12"
+          aliases:
+            - aliasednginx
+      exposed_ports:
+        - '80'
       ports:
         - 80:80
       volumes:
-        - /etc/docker/nginx/
+        - /etc/docker/nginx:/etc/nginx/conf.d:rw
 
   - name: Copy nginx config file to remote host
     copy:
       src: ~/ansible/default.conf
-      dest: /home/devops/
+      dest: /etc/docker/nginx/
 
-  - name: Copy our default.conf in nginx container
-    command: "docker cp default.conf nginx:/etc/nginx/conf.d/"
-
-  - name: Restart nginx container with new config file
-    command: "docker container restart nginx"
+  - name: Restrict connection to 3000 Grafana port except docker's inner network
+    command: iptables -R DOCKER 1 -p tcp -i ext_if ! -s 172.3.27.12 -j DROP
